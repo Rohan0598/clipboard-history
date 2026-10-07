@@ -9,7 +9,7 @@
 ; Your history (AppData\Roaming\ClipboardHistory) is NOT deleted on uninstall.
 
 #define MyAppName "Clipboard History"
-#define MyAppVersion "1.2.0"
+#define MyAppVersion "1.3.0"
 #define MyAppExe "ClipboardHistory.exe"
 #define RunKey "Software\Microsoft\Windows\CurrentVersion\Run"
 

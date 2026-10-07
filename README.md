@@ -16,6 +16,9 @@ with one click.
 - Links get a readable title automatically, open in your browser with one click,
   and can be ticked off once read
 - Search by text, title, note or tag
+- **Export saved items** from the tray menu to a readable Markdown file, grouped by
+  tag, to keep a copy in Google Drive or anywhere else (a one-way copy: the app can't
+  load it back in yet)
 - Icons show what each item is: link, email, code, number or text
 - Skips passwords copied from password managers (Bitwarden, KeePass, 1Password and others)
 - **Pause recording** from the tray icon when you're copying something private
@@ -54,6 +57,8 @@ If the result doesn't match the one in the release notes, don't run the file.
 - Passwords are skipped only when the app you copy from marks them as private
   (password managers do). A password copied from a note or a chat is saved like
   any other text: use **Pause recording** or the ✕ button for those.
+- An exported file is plain text: anyone who can open it can read your saved items,
+  so think before putting it in a shared folder.
 - Uninstalling keeps your history. To remove it too, delete the
   `%APPDATA%\ClipboardHistory` folder.
 
@@ -75,6 +80,7 @@ python build.py        # build dist\ and installer\ClipboardHistory-Setup.exe
 | `db.py` | SQLite storage, favourites, names, 24-hour cleanup |
 | `cliptype.py` | Detects links, emails, code and numbers |
 | `privacy.py` | Detects passwords marked private by password managers |
+| `export.py` | Writes the saved items to a Markdown file |
 | `icon.py` | All icons, drawn in code |
 | `startup.py` | "Start with Windows" on/off |
 | `build.py`, `installer.iss` | Packaging into an .exe and a Windows installer |

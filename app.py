@@ -21,11 +21,15 @@ import sys
 import threading
 import traceback
 
+import tkinter as tk
+from tkinter import filedialog
+
 import customtkinter as ctk
 import keyboard
 import pystray
 
 import db
+import export
 from icon import make_tray_image
 import popup
 import startup
@@ -63,7 +67,10 @@ class App:
 
         self.panel = None
         self.startup_on = startup.is_enabled()
-        self.watcher = watcher.Watcher(db.connect(), verbose=False)
+        self.conn = db.connect()
+        self.watcher = watcher.Watcher(self.conn, verbose=False)
+        self.exporting = False   # True while the Save As window is open (stops a second one opening)
+        self.export_dir = None   # the folder you last exported to, so the next Save As starts there
 
         # IMPORTANT: the hotkey and the tray icon run in their own background threads.
         # tkinter only works safely from the main thread, so those threads never touch
@@ -83,6 +90,7 @@ class App:
                                  checked=lambda item: self.watcher.paused),
                 pystray.MenuItem("Start with Windows", lambda: self.events.put("startup"),
                                  checked=lambda item: self.startup_on),
+                pystray.MenuItem("Export saved items…", lambda: self.events.put("export")),
                 pystray.Menu.SEPARATOR,
                 pystray.MenuItem("Quit", lambda: self.events.put("quit")),
             ),
@@ -123,6 +131,8 @@ class App:
                     self.toggle_pause()
                 elif event == "startup":
                     self.toggle_startup()
+                elif event == "export":
+                    self.export_saved()
                 elif event == "quit":
                     self.quit()
                     return
@@ -151,6 +161,49 @@ class App:
             traceback.print_exc()
         self.startup_on = startup.is_enabled()  # re-read, so the tick shows what's really set
         self.tray.update_menu()
+
+    def export_saved(self):
+        """Tray > Export saved items…: ask where to save, then write the Markdown file."""
+        if self.exporting:
+            return
+        rows = db.saved(self.conn)
+        if not rows:
+            show_message("Nothing to export yet.\n\nStar an item (☆) in the history to save it first.")
+            return
+
+        self.exporting = True
+        # The real window is hidden, and a Save As window without a visible owner can open
+        # behind other programs. So give it a tiny see-through owner that sits on top.
+        owner = tk.Toplevel(self.root)
+        try:
+            owner.overrideredirect(True)
+            owner.geometry("1x1+0+0")
+            owner.attributes("-alpha", 0.0)
+            owner.attributes("-topmost", True)
+            owner.update()
+            documents = os.path.join(os.path.expanduser("~"), "Documents")
+            path = filedialog.asksaveasfilename(
+                parent=owner,
+                title="Export saved items",
+                initialdir=self.export_dir or (documents if os.path.isdir(documents) else os.path.expanduser("~")),
+                initialfile=export.default_filename(),
+                defaultextension=".md",
+                filetypes=[("Markdown file", "*.md"), ("All files", "*.*")],
+            )
+        finally:
+            owner.destroy()
+            self.exporting = False
+        if not path:  # you pressed Cancel
+            return
+
+        try:
+            count = export.write(path, rows)
+        except OSError as error:
+            traceback.print_exc()
+            show_message(f"Couldn't save the file:\n\n{error}", error=True)
+            return
+        self.export_dir = os.path.dirname(path)
+        show_message(f"Exported {count} saved item{'' if count == 1 else 's'} to:\n\n{path}")
 
     def close_panel(self):
         if self.panel:
