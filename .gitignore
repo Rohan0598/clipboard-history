@@ -1,0 +1,23 @@
+# Build output - these are rebuilt by build.py and attached to GitHub Releases, never committed
+build/
+dist/
+installer/
+*.spec
+icon.ico
+
+# Python caches
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# Personal data - your clipboard history must never be uploaded
+*.db
+*.db-journal
+*.log
+
+# Editor / OS clutter
+.vscode/
+.idea/
+Thumbs.db
+desktop.ini
